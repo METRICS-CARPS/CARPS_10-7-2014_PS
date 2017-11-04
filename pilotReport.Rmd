@@ -16,12 +16,13 @@ output:
 
 #### Methods summary: 
 [The point of Gilead & Liberman's (2014) "Study 1" is to test if activating "caregiving motivation" would strengthen a bias against out-groups. The authors recruited 300 participants (all Jewish mothers) to participate in an online study. N = 300 was deterimined to have 75 participants per condition. There were 4 condtions. However 14 were excluded, leaving N of 286.
-The 4 conditions were based on 2 manipulations: caregiving salience manipulation (with a 1. caregiving-salience and 2. no-caregiving-salience group) and out-group threat manipulation (3. out-group-threat condition and 4. natural-threat condition). Condition assignment was random and created by crossing the two caregiving-salience conditions with the two out-group-threat conditions. The dependent variable was an "out-group-bias" measure. ]
+The 4 conditions were based on 2 manipulations: *caregiving salience manipulation* (with 2 groups: caregiving-salience group and no-caregiving-salience group) and *out-group threat manipulation* (with 2 groups: out-group-threat condition and  natural-threat condition). Condition assignment was random and created by crossing the two caregiving-salience conditions with the two out-group-threat conditions. The DV of out-group bias was operationalized with an out-group bias questionnaire. The authors normalized the out-group bias scores, and then performed a factorial ANOVA with "caregiving (caregiving salience vs. no caregiving salience) and threat (out-group threat vs. natural threat) as IVs, and out-group bias as the DV." After finding an interaction, simple effects analyses were performed.]
 
 ------
 
 #### Target outcomes: 
-[Insert the target outcomes identified in targetOutcomes.md]  
+[The results showed a significant interaction between caregiving and threat, F(1, 282) = 4.220, p = .041, ηp2 = .014 (Fig. 1). Simple-effects analysis revealed that in the out-group-threat condition, participants who were primed for caregiving salience showed significantly higher levels of out-group bias (M = 0.851, SD = 0.528) than did the no-caregiving-salience group (M = 0.654, SD = 0.488), F(1, 282), p = .027, Cohen’s d = 0.387. In the natural-threat condition, there was no difference between participants in the caregiving-salience (M = 0.703, SD = 0.594) and no-caregiving-salience (M =
+0.773, SD = 0.583) groups, F < 1. No further effects attained significance.]  
 
 ------
 
@@ -41,41 +42,211 @@ library(knitr) # for kable table formating
 library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
 library(CARPSreports) # custom report functions
+library(ggplot2)
+library(ggthemes)
 ```
 
 ## Step 2: Load data
 
 ```{r}
+caregiving_salience <- read_excel("data/caregiving_salience_paper_raw_data.xlsx", sheet = 1)
+head(caregiving_salience)
+str(caregiving_salience)
 ```
 
 ## Step 3: Tidy data
 
 ```{r}
+# the data was already in long format
 ```
 
 ## Step 4: Run analysis
 
-### Pre-processing
-
-[you can remove this section if no pre-processing is required]
-
-```{r}
-```
-
 ### Descriptive statistics
 
 ```{r}
+# summmary stats of outgroup bias if in caregiving  & threat
+summary(caregiving_salience[which(caregiving_salience$story == 'caregiving' & caregiving_salience$tnaythreat == 'threat'),]) # mean 0.8519 
+sd(caregiving_salience$bias[caregiving_salience$story== 'caregiving' & caregiving_salience$tnaythreat == 'threat']) # 0.5280573
+
+# summmary stats of outgroup bias if in caregiving  & control
+summary(caregiving_salience[which(caregiving_salience$story == 'caregiving' & caregiving_salience$tnaythreat == 'control'),]) # mean 0.7035  
+sd(caregiving_salience$bias[caregiving_salience$story== 'caregiving' & caregiving_salience$tnaythreat == 'control']) # 0.5943702
+
+# summmary stats of outgroup bias if in control  & threat
+summary(caregiving_salience[which(caregiving_salience$story == 'control' & caregiving_salience$tnaythreat == 'threat'),]) # mean 0.6542
+sd(caregiving_salience$bias[caregiving_salience$story== 'control' & caregiving_salience$tnaythreat == 'threat']) # 0.4889919
+
+# summmary stats of outgroup bias if in control & control
+summary(caregiving_salience[which(caregiving_salience$story == 'control' & caregiving_salience$tnaythreat == 'control'),]) # mean 0.7735 
+sd(caregiving_salience$bias[caregiving_salience$story== 'control' & caregiving_salience$tnaythreat == 'control']) # 0.5834817
 ```
+The descriptives that I am obtaining seem to be very close to what is reported as means and SDs in the report. However, we will need to perform inferential statistics in order to know if the means of out-group bias between caregiving and non-careving are signiciant under the out-group threat condition.
+
+### Graphing: I added this section  
+
+I added this graph to see what the data look like, and to see if I could reproduce the Fig.1 that was reported in the paper.
+```{r echo=FALSE}
+# Bargraph with SE bars
+meanAndSem=function(x) c(mn = mean(x,na.rm=TRUE), se = sd(x,na.rm=T)/sqrt((sum(as.double(!is.na(x))))), len=sum(as.double(!is.na(x))))
+require(plyr)
+require(reshape)
+Fig1 = ddply(caregiving_salience, .(story,tnaythreat), summarize,mn = meanAndSem(bias)[1], se = meanAndSem(bias)[2])
+Fig1
+limits = aes(ymax = mn + se, ymin=mn - se)
+
+Fig1_plot = ggplot(Fig1, aes(x = factor(tnaythreat), y = mn, fill = factor(story)))+geom_bar(width=.9, stat = 'identity', position=position_dodge(.95),size=1.5,alpha = 0.7)+labs(title = "Outgroup Bias as a function of caregiving salience and threat condition", y="normalized out-group bias",x="threat condition ")+geom_errorbar(limits,color = 'black',position=position_dodge(.95),width=0.25) + labs(color = "Group") + theme(axis.title=element_text(face="bold",size="14", color="black")) + theme(title = element_text(face = "bold")) +  scale_fill_discrete("Group", labels = c("caregiving salience", "No caregiving salience"))
+Fig1_plot
+```
+
+The graph seems to look very close to what is graphically reported (Fig. 1) in the paper.
 
 ### Inferential statistics
 
+The outcome I am aiming to reproduce is the significant interaction between caregiving and threat.
 ```{r}
+library(broom)
+aov_int <- aov(bias ~ story * tnaythreat, data=caregiving_salience)
+aov_int_sum <- summary(aov_int) 
+knitr::kable(broom::tidy(aov_int)) # F(1,282) = 4.22, p = .041
+pval <- aov_int_sum[[1]][[3,"Pr(>F)"]] # 0.0408824
+pval_r <- round(pval, digits = 3) # 0.041
+num_df <- aov_int_sum[[1]][[1]][[1]] # 1
+den_df <- aov_int_sum[[1]][[1]][[4]] # 282
+Fstat <- aov_int_sum[[1]][[4]][[3]] # 4.21955
+Fstat_r <- round(Fstat, digits = 3) # 4.22
+ 
+library(lsr)
+aov_int_eta <- etaSquared(aov_int , type = 2, anova = TRUE)
+aov_int_eta.sq.part <- aov_int_eta[[3,2]] # 0.0147423549 
+aov_int_eta.sq.part_r <- round(aov_int_eta.sq.part, digits = 3) # 0.015
+
+# Comparing p value
+compareValues(reportedValue = .041, obtainedValue = 0.041, isP = T) # MATCH!
+# Comparing numerator DF
+compareValues(reportedValue = 1, obtainedValue = 1, isP = F) # MATCH!
+# Comparing denominator DF
+compareValues(reportedValue = 282, obtainedValue = 282, isP = F) # MATCH!
+# Comparing F stat
+compareValues(reportedValue = 4.220, obtainedValue = 4.22, isP = F) # MATCH!
+# Comparing partial eta squared
+compareValues(reportedValue = .014, obtainedValue = 0.015, isP = F) # MINOR NUMERICAL ERROR
 ```
+I performed an ANOVA as was reported in the paper and indeed, got the same results. There is a significant interaction between caregiving and threat,  *F*(`r num_df`,`r den_df`) = `r Fstat_r`, *p* = `r pval_r`, $\eta_{p}^{2}$ = `r aov_int_eta.sq.part_r`. The reported p value, DF, and F statisitc were matches. However, there was a minor numerical error in the partial eta squared, by 7.14%.
+
+Following this interaction, the paper reports post-hoc simple-effects analyses. Here, I am aiming to reproduce that in the out-group-threat condition, participants who were primed for caregiving salience showed
+significantly higher levels of out-group bias than did the no-caregiving-salience group. I will also aim to reporduce that in the natural-threat condition, there was no difference between participants in the caregiving-salience and no-caregiving-salience groups.  
+```{r}
+# Performing post-hoc tests from the ANOVA
+MultCompar <- knitr::kable(broom::tidy(TukeyHSD(aov_int)))
+MultCompar
+# compare Values with Tukey HSD
+compareValues(reportedValue = .027, obtainedValue = 0.1200284, isP = T) 
+```
+The TukeyHSD test at the beginning of this code chunk gives me the tests for multiple comparisons from the anova. According to my google searches, TukeyHSD of the ANOVA should be fine to find out which group means are different. However, I found very different values than what was reported. From emailing back and forth with Tom, we figured I'd try filtering the data. I therefore am not including this decsion error and major numerical error since in my carpsReport since this may not have not been the appropriate test to perform. I am next going to subset the `tnaythreat` variable into "threat" and "control" because the paper compares the caregiving manipulation within each of these conditions. 
+
+This chunk of code subsets the original dataframe `caregiving_salience` into a dataframe for the `out-group-threat` condition and `natural-threat` condition in order to look at difference in `story` manipulation under each condition of threat. 
+```{r}
+# Subsetting dataframe by the tnaythreat condition to look at difference in "story" under outgroup-threat and under natural-threat
+dataThreat <- subset(caregiving_salience, tnaythreat == "threat")
+dataCTL <- subset(caregiving_salience, tnaythreat == "control") 
+```
+
+I then perform simple effects analysis of `story` under the `out-group-threat` condition. I am performing F tests for these simple effects since that is what the paper reports. I aim aiming to reproduce the report that in the `out-group-threat` condition, participants who were primed for *caregiving salience* showed significantly higher levels of out-group bias than did the *no-caregiving-salience* group.
+```{r}
+# Simple Effect of story manipulation under the out-group-threat condition
+StoryCGvsCTL_outgrpthreat <-aov(bias ~ story, data = dataThreat)
+StoryCGvsCTL_outgrpthreat_sum <- summary(StoryCGvsCTL_outgrpthreat) 
+knitr::kable(broom::tidy(StoryCGvsCTL_outgrpthreat)) 
+SEpval <- StoryCGvsCTL_outgrpthreat_sum[[1]][[1,"Pr(>F)"]] # 0.01827411
+SEpval_r <- round(SEpval, digits = 3) # 0.018
+SEnum_df <- StoryCGvsCTL_outgrpthreat_sum[[1]][[1]][[1]] # 1
+SEden_df <- StoryCGvsCTL_outgrpthreat_sum[[1]][[1]][[2]] # 151
+SEcohensD <- cohensD(x = bias~story, data = dataThreat) # 0.3871863
+SEcohensD_r <- round(SEcohensD, digits = 3) # 0.387
+
+# Means and SDs of story manipulation condtion under out-group-threat condition
+attach(dataThreat)
+mean_CGvsCTL_OGthreat <- tapply(bias, story, mean)
+mean_CG_OGthreat <- mean_CGvsCTL_OGthreat[[1]][[1]] # 0.8519226
+mean_CG_OGthreat_r <- round(mean_CG_OGthreat, digits = 3) # 0.852
+mean_CTL_OGthreat <- mean_CGvsCTL_OGthreat[[2]][[1]] # 0.6542341
+mean_CTL_OGthreat_r <- round(mean_CTL_OGthreat, digits = 3) # 0.654
+SD_CGvsCTL_OGthreat <- tapply(bias, story, sd)
+SD_CG_OGthreat <- SD_CGvsCTL_OGthreat[[1]][[1]] # 0.5280573
+SD_CG_OGthreat_r <- round(SD_CG_OGthreat, digits = 3) # 0.528
+SD_CTL_OGthreat <- SD_CGvsCTL_OGthreat[[2]][[1]] # 0.4889919
+SD_CTL_OGthreat_r <- round(SD_CTL_OGthreat, digits = 3) # 0.489
+
+# The following comparisons (compareValues) are for the simple effects reporting caregiving vs. non-caregiving under out-group-threat condition
+
+# Comparing p value
+compareValues(reportedValue = .027, obtainedValue = 0.018, isP = T) # MAJOR NUMERICAL ERROR.
+# Comparing numerator DF
+compareValues(reportedValue = 1, obtainedValue = 1, isP = F) # MATCH!
+# Comparing denominator DF
+compareValues(reportedValue = 282, obtainedValue = 151, isP = F) # MAJOR NUMERICAL ERROR
+# Comparing effect size 
+compareValues(reportedValue =  0.387, obtainedValue = 0.387, isP = F) # MATCH!
+# Comparing reported mean of caregiving 
+compareValues(reportedValue = 0.851, obtainedValue = 0.852, isP = F) # MINOR NUMERICAL ERROR
+# Comparing reported SD of caregiving
+compareValues(reportedValue = 0.528, obtainedValue = 0.528, isP = F) # MATCH!
+# Comparing reported mean of non-caregiving 
+compareValues(reportedValue = 0.654, obtainedValue = 0.654, isP = F) # MATCH! 
+# Comparing reported SD of non-caregiving
+compareValues(reportedValue = 0.488, obtainedValue = 0.489, isP = F) # MINOR NUMERICAL ERROR
+```
+The values I obtained are very close to what was reported, but there do seem to be some errors, possibly due to rounding? I indeed obtained that under the `out-group-threat` condition, there were significnatly higher levels of out-group bias for those primed for caregiving salience (M = `r mean_CG_OGthreat_r`, SD = `r SD_CG_OGthreat_r`) compared to no-caregiving-salience (M = `r mean_CTL_OGthreat_r`, SD = `r SD_CTL_OGthreat_r`), *F*(`r SEnum_df`, `r SEden_df`), *p* = `r SEpval_r`, Cohen's d = `r SEcohensD_r`. However, there were still numerical errors. There was a major numerical error by 33.33% in *p* values. For the degrees of freedom, there was a match in the numerator, but a major numerical error in the denominator by 46.45%. This is very likely due to my subsetting the data. I'm not sure how the authors were able to conduct simple effects ANOVAS on the full dataset, but subsetting the data was the only way I was able to perform these simple effect F tests. The effect size reported and obtained was a match. There was a minor numerical error in the mean of out-group bias in the caregiving-salience condition by .12%, but a match in the SD of out-group bias in this condition. There was a match in mean of out-group bias in the non-caregiving salience condition, but a minor numerical error in the SD by .2% of out-group bias in this condition.
+
+I then perform simple effects analysis (ANOVA) of `story` under the `natural-threat` condition.
+```{r}
+# Simple Effect of story manipulation under the natural-threat condition
+StoryCGvsCTL_naturalthreat <-aov(bias ~ story, data = dataCTL)
+StoryCGvsCTL_naturalthreat_sum <- summary(StoryCGvsCTL_naturalthreat) # F value is 0.469 (< 1)
+knitr::kable(broom::tidy(StoryCGvsCTL_naturalthreat)) 
+
+# Means and SDs of story manipulation condtion under out-group-threat condition
+attach(dataCTL)
+mean_CGvsCTL_natthreat <- tapply(bias, story, mean)
+mean_CG_natthreat <- mean_CGvsCTL_natthreat[[1]][[1]] # 0.7035284
+mean_CG_natthreat_r <- round(mean_CG_natthreat, digits = 3) # 0.704
+mean_CTL_natthreat <- mean_CGvsCTL_natthreat[[2]][[1]] # 0.7735317
+mean_CTL_natthreat_r <- round(mean_CTL_natthreat, digits = 3) # 0.774
+SD_CGsvsCTL_natthreat <- tapply(bias, story, sd)
+SD_CG_natthreat <- SD_CGsvsCTL_natthreat[[1]][[1]] # 0.5943702
+SD_CG_natthreat_r <- round(SD_CG_natthreat, digits = 3) # 0.594
+SD_CTL_natthreat <- SD_CGsvsCTL_natthreat[[2]][[1]] # 0.5834817
+SD_CTL_natthreat_r <- round(SD_CTL_natthreat, digits = 3) # 0.583
+
+# The following comparisons are for the simple effects reporting caregiving vs. non-caregiving under natural-threat condition
+
+# Comparing reported mean of caregiving 
+compareValues(reportedValue = 0.703, obtainedValue = 0.704, isP = F) # MINOR NUMERICAL ERROR
+# Comparing reported SD of caregiving
+compareValues(reportedValue = 0.594, obtainedValue = 0.594, isP = F) # MATCH!
+# Comparing reported mean of non-caregiving 
+compareValues(reportedValue = 0.773, obtainedValue = 0.774, isP = F) # MINOR NUMERICAL ERROR
+# Comparing reported SD of non-caregiving
+compareValues(reportedValue = 0.583, obtainedValue = 0.583, isP = F) # MATCH!
+```
+I obtained similar results to what the paper reports for the `natural-threat` condition. In this condition, there was no difference between those in the caregiving-salience group (M = `r mean_CG_natthreat_r`, SD = `r SD_CG_natthreat_r`) and the no-caregiving-salience group (M = `r mean_CTL_natthreat_r`, SD = `r SD_CTL_natthreat_r`). The paper reports the F value < 1, which is what I obtained (F = .495); however, I couldn't perform the compareValues function on this becasue I didn't have an exact number for the reported F value. Therefore, I would report this as an INSUFFICIENT INFORMATION ERROR. There is a minor numerical error for the reported and obtained mean of out-group bias for the caregiving condition under natural threat by .14%, but there is a match in SD of out-group bias under this condition. There is a minor numerical error for reported and obtained mean of out-group bias for the non-caregiving condition under natural threat by .13%, but there is a match in SD of out-group bias under this condition.  
+
+I am next subsetting the dataframe by the story condition now to look at simple effects of  `threat` under `caregiving` and under `non-caregiving` conditions to reproduce the authors' claim that there were no other effects.
+```{r}
+dataCG <- subset(caregiving_salience, story == "caregiving")
+dataCG_CTL <- subset(caregiving_salience, story == "control") 
+# Simple Effect of threat given the caregiving manipulation
+Threat_givenCG <- aov(bias ~ tnaythreat, data = dataCG)
+Threat_givenCG_sum <- summary(Threat_givenCG)
+knitr::kable(broom::tidy(Threat_givenCG)) # F(1,150), p = 0.1053698
+# Means and SDs of story manipulation condtion under out-group-threat condition
+```
+The simple effects analyses do not show any difference of out-group bias between `out-group-threat` and `natural-threat` conditions when primed under `caregiving` and `non-caregiving` manipulations. Therefore, as reported, no other effects were significant.
 
 ## Step 5: Conclusion
 
 [Include the carpsReport function below]
-
 ```{r}
 # You can delete this commented text for your report, it is here to serve as a guide.
 # Use the carpsReport() function in this code chunk.
@@ -88,16 +259,17 @@ library(CARPSreports) # custom report functions
 # Time_to_Complete: Enter the estimated time to complete the report in minutes
 # Author_Assistance: Enter whether author assistance was required (TRUE/FALSE)
 # FOR EXAMPLE:
-# carpsReport(Report_Type = "pilot", 
-#             Article_ID = "ABhgyo", 
-#             Insufficient_Information_Errors = 0, 
-#             Decision_Errors = 1, 
-#             Major_Numerical_Errors = 4, 
-#             Time_to_Complete = 120, 
-#             Author_Assistance = TRUE)
+carpsReport(Report_Type = "pilot", 
+            Article_ID = "CARPS_10-7-2014_PS", 
+            Insufficient_Information_Errors = 1, 
+            Decision_Errors = 0, 
+            Major_Numerical_Errors = 2, 
+            Time_to_Complete = 360, 
+            Author_Assistance = FALSE)
 ```
 
-[Please also include a brief text summary describing your findings. If this reproducibility check was a failure, you should note any suggestions as to what you think the likely cause(s) might be.]
+[I performed an ANOVA as was reported in the paper and obtained very similar results for the main interaction reported. There is a significant interaction between caregiving and threat. However, there was a minor numerical error in the eta partial squared value. Following the interaction, I conducted a series of simple effects analysis with F tests, since these post-hoc F tests were reported in the paper. In order to do this, I subsetted the dataframe to perform the appropriate comparisons. For the simple effects under the `out-group-threat` condition, I reproduced the significnatly higher levels of out-group bias for participants primed for caregiving salience (M = `r mean_CG_OGthreat_r`, SD = `r SD_CG_OGthreat_r`) compared to those with no-caregiving-salience (M = `r mean_CTL_OGthreat_r`, SD = `r SD_CTL_OGthreat_r`), *F*(`r SEnum_df`, `r SEden_df`), *p* = `r SEpval_r`, Cohen's d = `r SEcohensD_r`. However, there  was a major numerical error by 33.33% in *p* values and a major numerical error in the denominator by 46.45%. This is very likely due to my subsetting the data. I'm not sure how the authors were able to conduct simple effects ANOVAS on the full dataset, but subsetting the data was the only way I was able to perform these simple effect F tests. There  was a minor numerical error in the mean of out-group bias in the caregiving-salience group by .12% and a minor numerical error in the SD by .2% of out-group bias in this group. All other statistics for this comparison under the `out-group-threat` condition were matches. For the simple effects under the `natural-threat` condition, I reproduced that there was no differnece in out-group bias between those in the caregiving-salidence group and no-caregiving-salience group. The paper reports the F value < 1, which is what I obtained (F = .495); however, I couldn't perform the compareValues function on this becasue I didn't have an exact number for the reported F value. Therefore, I would report this as an INSUFFICIENT INFORMATION ERROR. There was also a minor numerical error for the reported and obtained mean of out-group bias for the caregiving group under natural threat by .14%, and a minor numerical error for reported and obtained mean of out-group bias for the non-caregiving group under `natural threat` condition by .13%. All other statistics for this comparison under the `natural-threat` condition were matches. The results also report that "No further effects attained significance." I therefore, performed simple effects ANOVAs for the `threat` manipulation under `caregiving-salience` and `non-caregiving-salience.` The simple effects analyses do not show any difference of out-group bias between `out-group-threat` and `natural-threat` conditions when primed under `caregiving` and `non-caregiving` manipulations. Therefore, as reported, no other effects were significant.  
+Overall, the carpsReport function yields a **final outcome** as a *Failure* due to the 2 major numerical errors. Even, with these numerical errors, the conclusions are consistent with what was reported in the paper. I believe these numerical errors occured from subsetting the dataframe in order to perform the simple effect ANOVAS.]
 
 [This function will output information about the package versions used in this report:]
 
