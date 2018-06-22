@@ -426,8 +426,8 @@ reportObject &lt;- reproCheck(reportedValue = &quot;.014&quot;, obtainedValue = 
 <pre><code>## [1] &quot;MATCH for d. The reported value (0.387) and the obtained value (0.387) differed by 0%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
 <pre class="r"><code>aov_summary_threat &lt;- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='threat')))
 aov_summary_control &lt;- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='control')))</code></pre>
-<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue=&quot;0.27&quot;, obtainedValue=aov_summary_threat[[1]]$`Pr(&gt;F)`[1], valueType=&quot;p&quot;)</code></pre>
-<pre><code>## [1] &quot;DECISION_ERROR for p. The reported value (0.27) and the obtained value (0.02) differed by 92.59%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue=&quot;.027&quot;, obtainedValue=aov_summary_threat[[1]]$`Pr(&gt;F)`[1], valueType=&quot;p&quot;)</code></pre>
+<pre><code>## [1] &quot;MAJOR_ERROR for p. The reported value (0.027) and the obtained value (0.018) differed by 33.33%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
 <pre class="r"><code>reportObject &lt;- reproCheck(reportedValue=&quot;&lt;1.0&quot;, 
                            obtainedValue=aov_summary_control[[1]]$`F value`[1], 
                            valueType=&quot;F&quot;,
@@ -497,7 +497,7 @@ if(reportType == &quot;final&quot;){
 ##  language (EN)                        
 ##  collate  en_US.UTF-8                 
 ##  tz       &lt;NA&gt;                        
-##  date     2018-06-21                  
+##  date     2018-06-22                  
 ## 
 ##  package      * version date      
 ##  assertthat     0.2.0   2017-04-11

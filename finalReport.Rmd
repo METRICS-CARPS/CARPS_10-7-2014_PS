@@ -193,7 +193,7 @@ aov_summary_control <- summary(aov(bias ~ story, data=subset(caregiving_salience
 ```
 
 ```{r reproCheck-simple-effects-aov}
-reportObject <- reproCheck(reportedValue="0.27", obtainedValue=aov_summary_threat[[1]]$`Pr(>F)`[1], valueType="p")
+reportObject <- reproCheck(reportedValue=".027", obtainedValue=aov_summary_threat[[1]]$`Pr(>F)`[1], valueType="p")
 reportObject <- reproCheck(reportedValue="<1.0", 
                            obtainedValue=aov_summary_control[[1]]$`F value`[1], 
                            valueType="F",
