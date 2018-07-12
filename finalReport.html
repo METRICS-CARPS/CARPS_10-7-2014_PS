@@ -227,8 +227,8 @@ copilotNames &lt;- &quot;Ben Peloquin&quot; # insert the co-pilot's name here e.
 pilotTTC &lt;- 420 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 copilotTTC &lt;- 180 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 pilotStartDate &lt;- as.Date(&quot;10/26/2017&quot;, format = &quot;%m/%d/%y&quot;) # insert the pilot's start date in US format e.g., as.Date(&quot;01/25/18&quot;, format = &quot;%m/%d/%y&quot;)</code></pre>
-<pre><code>## Warning in strptime(x, format, tz = &quot;GMT&quot;): unknown timezone 'zone/tz/
-## 2018c.1.0/zoneinfo/America/Los_Angeles'</code></pre>
+<pre><code>## Warning in strptime(x, format, tz = &quot;GMT&quot;): unknown timezone 'default/
+## America/Los_Angeles'</code></pre>
 <pre class="r"><code>copilotStartDate &lt;- as.Date(&quot;06/20/2018&quot;, format = &quot;%m/%d/%y&quot;) # insert the co-pilot's start date in US format e.g., as.Date(&quot;01/25/18&quot;, format = &quot;%m/%d/%y&quot;)
 completionDate &lt;- as.Date(&quot;06/20/2018&quot;, format = &quot;%m/%d/%y&quot;) # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date(&quot;01/25/18&quot;, format = &quot;%m/%d/%y&quot;)</code></pre>
 <hr />
@@ -383,8 +383,8 @@ for (i in 1:length(descriptives_codes)) {
 ## [1] &quot;MATCH for sd. The reported value (0.594) and the obtained value (0.594) differed by 0%. NB obtained value was rounded to 3 decimal places.&quot;
 ## [1] &quot;MINOR_ERROR for mean. The reported value (0.773) and the obtained value (0.774) differed by 0.13%. NB obtained value was rounded to 3 decimal places.&quot;
 ## [1] &quot;MATCH for sd. The reported value (0.583) and the obtained value (0.583) differed by 0%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
-<div id="reprocuing-fig1" class="section level2">
-<h2>Reprocuing fig1</h2>
+<div id="reproducing-fig1" class="section level2">
+<h2>Reproducing fig1</h2>
 <pre class="r"><code>caregiving_salience %&gt;%
   group_by(story, tnaythreat) %&gt;%
   summarise(mean_=mean(bias),
@@ -424,10 +424,15 @@ reportObject &lt;- reproCheck(reportedValue = &quot;.014&quot;, obtainedValue = 
   cohensD(x=bias~story, data=.)</code></pre>
 <pre class="r"><code>reportObject &lt;- reproCheck(reportedValue=&quot;0.387&quot;, obtainedValue=cohendsD_threat, valueType=&quot;d&quot;)</code></pre>
 <pre><code>## [1] &quot;MATCH for d. The reported value (0.387) and the obtained value (0.387) differed by 0%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
-<pre class="r"><code>aov_summary_threat &lt;- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='threat')))
-aov_summary_control &lt;- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='control')))</code></pre>
-<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue=&quot;.027&quot;, obtainedValue=aov_summary_threat[[1]]$`Pr(&gt;F)`[1], valueType=&quot;p&quot;)</code></pre>
-<pre><code>## [1] &quot;MAJOR_ERROR for p. The reported value (0.027) and the obtained value (0.018) differed by 33.33%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
+<pre class="r"><code>aov_summary_threat &lt;- summary(aov(bias ~ story, data=subset(caregiving_salience,
+                                                            tnaythreat=='threat')))
+aov_summary_control &lt;- summary(aov(bias ~ story, data=subset(caregiving_salience,
+                                                             tnaythreat=='control')))
+aov_summary_contrast &lt;- summary(lm(bias~story*tnaythreat, data=caregiving_salience))</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue=&quot;.027&quot;,
+                           obtainedValue=aov_summary_contrast$coefficients[[14]],
+                           valueType=&quot;p&quot;)</code></pre>
+<pre><code>## [1] &quot;MATCH for p. The reported value (0.027) and the obtained value (0.027) differed by 0%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
 <pre class="r"><code>reportObject &lt;- reproCheck(reportedValue=&quot;&lt;1.0&quot;, 
                            obtainedValue=aov_summary_control[[1]]$`F value`[1], 
                            valueType=&quot;F&quot;,
@@ -435,24 +440,24 @@ aov_summary_control &lt;- summary(aov(bias ~ story, data=subset(caregiving_salie
 <pre><code>## [1] &quot;MATCH for F. Eyeball comparison only.&quot;</code></pre>
 <div id="step-5-conclusion" class="section level2">
 <h2>Step 5: Conclusion</h2>
-<p>All the reported statistics from Experiment 1 were reproduced <strong>except</strong> in one case. It appears that the authors intended to report an F-statistic (showing the dfs), but there is no statistic and only a p-value that we are unable to reproduce leading to a <code>DECISION_ERROR</code>. The particular passage starts on the bottom of page 1382:</p>
+<p>All the reported statistics from Experiment 1 were reproduced <strong>except</strong> one case wasn’t very clear. It appears that the authors intended to report an F-statistic (showing the dfs), but there is no statistic and only a p-value that we are unable to reproduce leading to a <code>DECISION_ERROR</code>. The particular passage starts on the bottom of page 1382:</p>
 <blockquote>
 <p>Simple-effects analysis revealed that in the out-group-threat condition, partici-pants who were primed for caregiving salience showed significantly higher levels of out-group bias (M = 0.851, SD = 0.528) than did the no-caregiving-salience group (M = 0.654, SD = 0.488), F(1, 282), p = .027, Cohen’s d = 0.387.</p>
 </blockquote>
-<p>It is unclear exactly what <code>F(1, 282), p = .027</code> refers to.</p>
-<pre class="r"><code>Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
+<p>The authors responded that this was due to their simple effects anlaysis which relied on a contrast. If we construct a <code>glm</code> given their set-up (with an interaction between <code>story*tnaythreat</code>) we do get the same p-value of 0.027.</p>
+<pre class="r"><code>Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
 
 Insufficient_Information_Errors &lt;- 0 # how many discrete insufficient information issues did you encounter?
 
 # Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
 
-locus_typo &lt;- NA # how many discrete issues did you encounter that related to typographical errors?
-locus_specification &lt;- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
-locus_analysis &lt;- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
-locus_data &lt;- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
-locus_unidentified &lt;- NA # how many discrete issues were there for which you could not identify the cause
+locus_typo &lt;- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification &lt;- 1 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis &lt;- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data &lt;- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified &lt;- 0 # how many discrete issues were there for which you could not identify the cause
 
-Affects_Conclusion &lt;- NA # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.</code></pre>
+Affects_Conclusion &lt;- 0 # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.</code></pre>
 <pre class="r"><code>reportObject &lt;- reportObject %&gt;%
   filter(dummyRow == FALSE) %&gt;% # remove the dummy row
   select(-dummyRow) %&gt;% # remove dummy row designation
@@ -497,7 +502,7 @@ if(reportType == &quot;final&quot;){
 ##  language (EN)                        
 ##  collate  en_US.UTF-8                 
 ##  tz       &lt;NA&gt;                        
-##  date     2018-06-22                  
+##  date     2018-07-12                  
 ## 
 ##  package      * version date      
 ##  assertthat     0.2.0   2017-04-11

@@ -137,7 +137,7 @@ for (i in 1:length(descriptives_codes)) {
 ```
 
 
-## Reprocuing fig1
+## Reproducing fig1
 ```{r reproduce-fig1}
 caregiving_salience %>%
   group_by(story, tnaythreat) %>%
@@ -188,12 +188,20 @@ reportObject <- reproCheck(reportedValue="0.387", obtainedValue=cohendsD_threat,
 
 
 ```{r simple-effects-aov}
-aov_summary_threat <- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='threat')))
-aov_summary_control <- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='control')))
+aov_summary_threat <- summary(aov(bias ~ story, data=subset(caregiving_salience,
+                                                            tnaythreat=='threat')))
+aov_summary_control <- summary(aov(bias ~ story, data=subset(caregiving_salience,
+                                                             tnaythreat=='control')))
+aov_summary_contrast <- summary(lm(bias~story*tnaythreat, data=caregiving_salience))
+
+
+
 ```
 
 ```{r reproCheck-simple-effects-aov}
-reportObject <- reproCheck(reportedValue=".027", obtainedValue=aov_summary_threat[[1]]$`Pr(>F)`[1], valueType="p")
+reportObject <- reproCheck(reportedValue=".027",
+                           obtainedValue=aov_summary_contrast$coefficients[[14]],
+                           valueType="p")
 reportObject <- reproCheck(reportedValue="<1.0", 
                            obtainedValue=aov_summary_control[[1]]$`F value`[1], 
                            valueType="F",
@@ -202,28 +210,28 @@ reportObject <- reproCheck(reportedValue="<1.0",
 
 ## Step 5: Conclusion
 
-All the reported statistics from Experiment 1 were reproduced **except** in one case. It appears that the authors intended to report an F-statistic (showing the dfs), but there is no statistic and only a p-value that we are unable to reproduce leading to a `DECISION_ERROR`. The particular passage starts on the bottom of page 1382:
+All the reported statistics from Experiment 1 were reproduced **except** one case wasn't very clear. It appears that the authors intended to report an F-statistic (showing the dfs), but there is no statistic and only a p-value that we are unable to reproduce leading to a `DECISION_ERROR`. The particular passage starts on the bottom of page 1382:
 
 
 > Simple-effects analysis revealed that in the out-group-threat condition, partici-pants who were primed for caregiving salience showed significantly higher levels of out-group bias (M = 0.851, SD = 0.528) than did the no-caregiving-salience group (M = 0.654, SD = 0.488), F(1, 282), p = .027, Cohen’s d = 0.387.
 
-It is unclear exactly what `F(1, 282), p = .027` refers to.
+The authors responded that this was due to their simple effects anlaysis which relied on a contrast. If we construct a `glm` given their set-up (with an interaction between `story*tnaythreat`) we do get the same p-value of 0.027.
 
 
 ```{r}
-Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
+Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
 
 Insufficient_Information_Errors <- 0 # how many discrete insufficient information issues did you encounter?
 
 # Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
 
-locus_typo <- NA # how many discrete issues did you encounter that related to typographical errors?
-locus_specification <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
-locus_analysis <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
-locus_data <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
-locus_unidentified <- NA # how many discrete issues were there for which you could not identify the cause
+locus_typo <- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification <- 1 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis <- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data <- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified <- 0 # how many discrete issues were there for which you could not identify the cause
 
-Affects_Conclusion <- NA # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
+Affects_Conclusion <- 0 # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
 ```
 
 ```{r}
