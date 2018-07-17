@@ -12,7 +12,7 @@ reportType <- 'final'
 pilotNames <- "Jaclyn Schwartz, Drew Tysen Dauer, Erik Santoro" # insert the pilot's name here e.g., "Tom Hardwicke". If there are multiple pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 copilotNames <- "Ben Peloquin" # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 pilotTTC <- 420 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
-copilotTTC <- 180 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC <- 210 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 pilotStartDate <- as.Date("10/26/2017", format = "%m/%d/%y") # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 copilotStartDate <- as.Date("06/20/2018", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 completionDate <- as.Date("06/20/2018", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
@@ -191,63 +191,59 @@ reportObject <- reproCheck(reportedValue="0.387", obtainedValue=cohendsD_threat,
 
 
 ```{r simple-effects-aov}
-aov_summary_threat <- summary(aov(bias ~ story, data=subset(caregiving_salience,
-                                                            tnaythreat=='threat')))
 aov_summary_control <- summary(aov(bias ~ story, data=subset(caregiving_salience,
                                                              tnaythreat=='control')))
-aov_summary_contrast <- summary(aov(bias~story*tnaythreat, data=caregiving_salience))
+# Note: these analyses were incorrect.
+# aov_summary_threat <- summary(aov(bias ~ story, data=subset(caregiving_salience,
+#                                                             tnaythreat=='threat')))
+# aov_summary_contrast <- summary(aov(bias~story*tnaythreat, data=caregiving_salience))
 ```
 
 ```{r reproCheck-simple-effects-aov}
-aov_summary_threat <- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='threat')))
+# Note: these analyses were incorrect.
+# aov_summary_threat <- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='threat')))
 
 # tom trying alternative anova implementation
-aov.out <- afex::aov_ez(data=subset(caregiving_salience, tnaythreat=='threat') %>% 
-                          rownames_to_column("id"), id = "id", dv = "bias", between = "story")
+# aov.out <- afex::aov_ez(data=subset(caregiving_salience, tnaythreat=='threat') %>% 
+#                           rownames_to_column("id"), id = "id", dv = "bias", between = "story")
 # BP trying alternative
-aov.out <- afex::aov_ez(data=caregiving_salience %>% rownames_to_column("id"), id="id", dv="bias", 
-                        between=c("story", "tnaythreat"), check_contrasts=T)
+# aov.out <- afex::aov_ez(data=caregiving_salience %>% rownames_to_column("id"), id="id", dv="bias", 
+#                         between=c("story", "tnaythreat"), check_contrasts=T)
 # same result
-aov_summary_control <- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='control')))
+# aov_summary_control <- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='control')))
 ```
 
-```{r reproCheck-simple-effects-aov2}
+```{r simple-effects-with-author-assistance}
+# tom checking simple effects
+tmp <- caregiving_salience %>% 
+  mutate(tnaythreat = recode_factor(tnaythreat, control = "noThreat"),
+           condition = factor(paste0(story,"_",tnaythreat)))
 
-reportObject <- reproCheck(reportedValue=".027", obtainedValue=aov_summary_threat[[1]]$`Pr(>F)`[1], valueType="p")
+threat_story <-   c(0, -1, 0, 1)
+nothreat_story <- c(-1, 0, 1, 0)
+threat_care <-    c(-1, 1, 0, 0)
+threat_control <- c(0, 0, -1, 1)
 
+contrasts(tmp$condition) <- threat_story
+
+aov.out <- aov(bias ~  condition, data=tmp)
+summ <- summary.lm(aov.out)
+```
+
+```{r reproCheck-simple-effects}
+# Using Tom's contrast analysis
+reportObject <- reproCheck(reportedValue=".027", obtainedValue=summ$coefficients[14], valueType="p")
+
+# Does not use Tom's contrasts analysis 
 reportObject <- reproCheck(reportedValue="<1.0", 
                            obtainedValue=aov_summary_control[[1]]$`F value`[1], 
                            valueType="F",
                            eyeballCheck=TRUE)
 ```
 
-```{r}
-# tom checking simple effects
-tmp <- caregiving_salience %>% 
-  mutate(tnaythreat = recode_factor(tnaythreat, control = "noThreat"),
-           condition = factor(paste0(story,"_",tnaythreat)))
-
-threat_story <- c(0, -1, 0, 1)
-nothreat_story <- c(-1, 0, 1, 0)
-threat_care <- c(-1, 1, 0, 0)
-threat_control <- c(0, 0, -1, 1)
-
-contrasts(tmp$condition) <- threat_story
-
-aov.out <- aov(bias ~  condition, data=tmp)
-
-summary.lm(aov.out)
-```
-
 ## Step 5: Conclusion
-All the reported statistics from Experiment 1 were reproduced **except** one case wasn't very clear. It appears that the authors intended to report an F-statistic (showing the dfs), but there is no statistic and only a p-value that we are unable to reproduce leading to a `DECISION_ERROR`. The particular passage starts on the bottom of page 1382:
 
-All the reported statistics from Experiment 1 were reproduced **except** in one case. 
-
-> F(1, 282), p = .027
-
-The authors responded that this was due to their simple effects anlaysis which relied on a contrast. If we construct a `glm` given their set-up (with an interaction between `story*tnaythreat`) we do get the same p-value of 0.027.
-
+All anlayses were reproduced.
 
 ```{r}
 Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
