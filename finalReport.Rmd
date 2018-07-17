@@ -161,7 +161,11 @@ aov_raw <- aov(bias ~ story * tnaythreat, data=caregiving_salience)
 aov_summary <- summary(aov_raw)
 ``` 
 
+> The results showed a significant interaction between caregiving and threat, F(1, 282) = 4.220, p = .041, ηp2 = .014 (Fig. 1).
+
 ```{r report-anova1}
+reportObject <- reproCheck(reportedValue="1", obtainedValue=aov_summary[[1]]$Df[3], valueType="df")
+reportObject <- reproCheck(reportedValue="282", obtainedValue=aov_summary[[1]]$Df[4], valueType="df")
 reportObject <- reproCheck(reportedValue="4.220", obtainedValue=aov_summary[[1]]$`F value`[3], valueType="F")
 reportObject <- reproCheck(reportedValue="0.041", obtainedValue=aov_summary[[1]]$`Pr(>F)`[3], valueType="p")
 ```
@@ -170,6 +174,10 @@ reportObject <- reproCheck(reportedValue="0.041", obtainedValue=aov_summary[[1]]
 eta_sq <- etaSquared(aov_raw , type=2, anova=TRUE)# Comparing partial eta squared
 reportObject <- reproCheck(reportedValue = ".014", obtainedValue = eta_sq[7], valueType = 'pes') # MINOR NUMERICAL ERROR
 ```
+
+> Simple-effects analysis revealed that in the out-group-threat condition, participants who were primed for caregiving salience showed significantly higher levels of out-group bias (M = 0.851, SD = 0.528) than did the no-caregiving-salience group (M = 0.654, SD = 0.488), F(1, 282), p = .027, Cohen’s d = 0.387.
+
+Means and SDs were checked above. Here we check the Cohen's d:
 
 ```{r cohens-d}
 cohendsD_threat <- caregiving_salience %>%
@@ -211,6 +219,24 @@ reportObject <- reproCheck(reportedValue="<1.0",
                            obtainedValue=aov_summary_control[[1]]$`F value`[1], 
                            valueType="F",
                            eyeballCheck=TRUE)
+```
+
+```{r}
+# tom checking simple effects
+tmp <- caregiving_salience %>% 
+  mutate(tnaythreat = recode_factor(tnaythreat, control = "noThreat"),
+           condition = factor(paste0(story,"_",tnaythreat)))
+
+threat_story <- c(0, -1, 0, 1)
+nothreat_story <- c(-1, 0, 1, 0)
+threat_care <- c(-1, 1, 0, 0)
+threat_control <- c(0, 0, -1, 1)
+
+contrasts(tmp$condition) <- threat_story
+
+aov.out <- aov(bias ~  condition, data=tmp)
+
+summary.lm(aov.out)
 ```
 
 ## Step 5: Conclusion
