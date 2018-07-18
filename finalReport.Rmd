@@ -12,7 +12,7 @@ reportType <- 'final'
 pilotNames <- "Jaclyn Schwartz, Drew Tysen Dauer, Erik Santoro" # insert the pilot's name here e.g., "Tom Hardwicke". If there are multiple pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 copilotNames <- "Ben Peloquin" # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 pilotTTC <- 420 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
-copilotTTC <- 210 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC <- 240 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 pilotStartDate <- as.Date("10/26/2017", format = "%m/%d/%y") # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 copilotStartDate <- as.Date("06/20/2018", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 completionDate <- as.Date("06/20/2018", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
@@ -130,8 +130,8 @@ for (i in 1:length(descriptives_codes)) {
 }
 ```
 
+Reproducing fig1:
 
-## Reproducing fig1
 ```{r reproduce-fig1}
 caregiving_salience %>%
   group_by(story, tnaythreat) %>%
@@ -152,7 +152,7 @@ caregiving_salience %>%
 
 ![](img/fig1.png)
 
-# Inferential statistics
+## Inferential statistics
 
 ANOVA with caregiving (caregiving salience vs. no caregiving salience) and threat (out-group threat vs. natural threat) as independent variables and out-group bias as the dependent variable
 
@@ -199,22 +199,8 @@ aov_summary_control <- summary(aov(bias ~ story, data=subset(caregiving_salience
 # aov_summary_contrast <- summary(aov(bias~story*tnaythreat, data=caregiving_salience))
 ```
 
-```{r reproCheck-simple-effects-aov}
-# Note: these analyses were incorrect.
-# aov_summary_threat <- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='threat')))
-
-# tom trying alternative anova implementation
-# aov.out <- afex::aov_ez(data=subset(caregiving_salience, tnaythreat=='threat') %>% 
-#                           rownames_to_column("id"), id = "id", dv = "bias", between = "story")
-# BP trying alternative
-# aov.out <- afex::aov_ez(data=caregiving_salience %>% rownames_to_column("id"), id="id", dv="bias", 
-#                         between=c("story", "tnaythreat"), check_contrasts=T)
-# same result
-# aov_summary_control <- summary(aov(bias ~ story, data=subset(caregiving_salience, tnaythreat=='control')))
-```
-
 ```{r simple-effects-with-author-assistance}
-# tom checking simple effects
+
 tmp <- caregiving_salience %>% 
   mutate(tnaythreat = recode_factor(tnaythreat, control = "noThreat"),
            condition = factor(paste0(story,"_",tnaythreat)))
@@ -241,9 +227,9 @@ reportObject <- reproCheck(reportedValue="<1.0",
                            eyeballCheck=TRUE)
 ```
 
-## Step 5: Conclusion
+# Step 5: Conclusion
 
-All anlayses were reproduced.
+We could initially reproduce all values except for one p-value reported for a simple effects analysis. After the original authors shared SPSS syntax with us it became clear that we were implementing the analysis in a different way. When we used the original method, we were able to reproduce the p-value successfully.
 
 ```{r}
 Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
@@ -257,6 +243,13 @@ locus_specification <- 1 # how many discrete issues did you encounter that relat
 locus_analysis <- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
 locus_data <- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
 locus_unidentified <- 0 # how many discrete issues were there for which you could not identify the cause
+
+# How many of the above issues were resolved through author assistance?
+locus_typo_resolved <- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification_resolved <- 1 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis_resolved <- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data_resolved <- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified_resolved <- 0 # how many discrete issues were there for which you could not identify the cause
 
 Affects_Conclusion <- 0 # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
 ```
@@ -282,7 +275,7 @@ if(any(reportObject$comparisonOutcome != "MATCH") | Insufficient_Information_Err
 }
 
 # collate report extra details
-reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified)
+reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified, locus_typo_resolved, locus_specification_resolved, locus_analysis_resolved, locus_data_resolved, locus_unidentified_resolved)
 
 # save report objects
 if(reportType == "pilot"){
